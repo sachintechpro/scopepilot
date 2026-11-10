@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 import json
 import os
 from .core import review, catalog
+from .handoff import prepare
 from .ai import assist
 
 HOME = Path(__file__).resolve().parents[1] / 'web' / 'index.html'
@@ -37,7 +38,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200,json.dumps({'rules':True,'ai':bool(os.environ.get('OPENAI_API_KEY'))}))
         self.send(404,json.dumps({'error':'Not found'}))
     def do_POST(self):
-        if urlsplit(self.path).path != '/api/review':
+        route=urlsplit(self.path).path
+        if route not in ('/api/review','/api/handoff'):
             return self.send(404,json.dumps({'error':'Not found'}))
         size=int(self.headers.get('Content-Length','0'))
         if size<1 or size>18000:
@@ -46,6 +48,8 @@ class Handler(BaseHTTPRequestHandler):
             data=json.loads(self.rfile.read(size))
             if not isinstance(data,dict):
                 raise ValueError('Request must be a JSON object')
+            if route == '/api/handoff':
+                return self.send(200,json.dumps(prepare(data)))
             text=data.get('request','')
             if not isinstance(text,str) or not 10<=len(text.strip())<=6000:
                 raise ValueError('Enter a request between 10 and 6,000 characters.')
