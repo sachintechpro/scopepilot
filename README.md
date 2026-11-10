@@ -1,4 +1,4 @@
-# ScopePilot — Construction Scope Review Assistant
+# ScopePilot — Construction Company Scope Review Assistant
 
 **[Try the live application](https://scopepilot-etgt.onrender.com)** · **[BuildEstimate live demo](https://buildestimate-82xs.onrender.com)** · [Automated tests](https://github.com/sachintechpro/scopepilot/actions)
 
