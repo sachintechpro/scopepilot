@@ -67,6 +67,34 @@ def near_quantity(text, hit, unit):
     return validated_quantity(num.group(0)) if num else None
 
 
+def location_followup(text):
+    """Recognize ZIPs and explicit site-location phrasing, without geocoding.
+
+    A named city/neighborhood is not a street address: ask for exact site address.
+    Ignore vague words like 'in the kitchen' as evidence of a job location.
+    """
+    # A street address takes priority over any ZIP code or city mention.
+    if re.search(r'\b\d{1,6}\s+[A-Za-z0-9 .-]+\s+'
+                 r'(?:street|st|avenue|ave|road|rd|drive|dr|boulevard|blvd|lane|ln|court|ct)\b',text,re.I):
+        return None
+    if re.search(r'\b\d{5}(?:-\d{4})?\b', text):
+        return 'Please confirm the complete job-site street address (ZIP provided).'
+    # Narrow location phrases, not generic 'in <noun>'.
+    site = re.search(
+        r'\b(?:house|home|property|job\s*site|site|project|building)\s+(?:is\s+)?'
+        r'(?:located\s+)?(?:in|at|near)\s+([A-Za-z][A-Za-z .-]{2,55})', text, re.I)
+    if site:
+        place = re.split(r'[,.;!?\n]|\s+(?:and|but|could|please|with|where|which)\b',
+                         site.group(1), maxsplit=1, flags=re.I)[0].strip()
+        if place and not re.fullmatch(r'(?:the|our|my)\s+(?:kitchen|bathroom|living room|bedroom|house|home)', place, re.I):
+            return f'What is the full job-site street address? Location mentioned: {place}.'
+    # Direct explicit postal address or city/location labels.
+    if re.search(r'\b\d{1,6}\s+[A-Za-z0-9 .-]+\s+'
+                 r'(?:street|st|avenue|ave|road|rd|drive|dr|boulevard|blvd|lane|ln|court|ct)\b',text,re.I):
+        return None
+    return 'What is the job-site location (city or ZIP code) and street address?'
+
+
 def review(text):
     if not isinstance(text, str) or not 10 <= len(text.strip()) <= 6000:
         raise ValueError('Enter a project request between 10 and 6,000 characters.')
@@ -94,8 +122,9 @@ def review(text):
     for pattern, question in general_questions:
         if re.search(pattern, text, re.I):
             missing.append(question)
-    if not re.search(r'\b(address|zip|city|location|site)\b', text, re.I):
-        missing.append('What is the job-site location or ZIP code?')
+    location_question = location_followup(text)
+    if location_question:
+        missing.append(location_question)
     if not re.search(r'\b(by|before|start|deadline|schedule|week|month|date)\b', text, re.I):
         missing.append('What is the target schedule?')
     return {'mode':'Rules demo — no AI model', 'items':items, 'questions':missing,

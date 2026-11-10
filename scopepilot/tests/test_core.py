@@ -33,3 +33,25 @@ class ScopeReviewTests(unittest.TestCase):
     def test_catalog_matches_estimator(self):
         self.assertEqual(len(catalog()),7)
 if __name__=='__main__':unittest.main()
+
+class LocationFollowupTests(unittest.TestCase):
+    def test_neighborhood_is_not_treated_as_missing_location(self):
+        result = review('Replace 12 linear ft of kitchen cabinets. The house is in Woodland Hills. Please quote.')
+        self.assertTrue(any('Woodland Hills' in q and 'street address' in q for q in result['questions']))
+        self.assertFalse(any(q == 'What is the job-site location or ZIP code?' for q in result['questions']))
+
+    def test_zip_needs_street_address(self):
+        result = review('Install 200 sqft flooring at the property, ZIP 91364 next month.')
+        self.assertTrue(any('ZIP provided' in q for q in result['questions']))
+
+    def test_missing_location(self):
+        result = review('Paint 400 sqft of walls in the kitchen by next month.')
+        self.assertTrue(any('job-site location' in q for q in result['questions']))
+
+    def test_full_address_with_zip_does_not_ask_again(self):
+        result = review('Paint 400 sqft at 123 Main Street, Los Angeles CA 90012 next month.')
+        self.assertFalse(any('job-site' in q for q in result['questions']))
+
+    def test_full_address(self):
+        result = review('Paint 400 sqft walls at 123 Main Street in Los Angeles next month.')
+        self.assertFalse(any('job-site' in q for q in result['questions']))
