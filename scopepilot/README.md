@@ -88,3 +88,26 @@ Python API (app/server.py)
 ## Limitations
 
 The rules parser is deliberately narrow and can fail on complex phrasing or wrongly associate nearby measurements. It recognizes only seven demo catalog items. It does not understand images, specifications, floorplans, permits, contracts, local pricing, or detailed estimating. The optional AI integration is not a substitute for a professional's measurements or approvals. The sample catalog has illustrative values only.
+
+## ScopePilot V3: location follow-up and verified estimating handoff
+
+- A customer stating **“The house is in Woodland Hills”** now receives a follow-up for the **full street address**, rather than being asked for an unspecified location or ZIP code.
+- If only a ZIP code is supplied, the assistant still asks for a street address. A full street address suppresses the generic location question. Location recognition is intentionally heuristic; it is not geocoding or address verification.
+- The approved export matches BuildEstimate's **POST /api/estimate** JSON request schema. Importing JSON through BuildEstimate's web interface is **not** available yet; test the exported request through the API.
+- No pricing is invented by ScopePilot; BuildEstimate performs the costing using its separate catalog.
+
+### Example integration verification
+
+After downloading `buildestimate-input.json`, use a terminal to call the live BuildEstimate API:
+
+```bash
+curl -X POST https://buildestimate-82xs.onrender.com/api/estimate -H "Content-Type: application/json" --data-binary @buildestimate-input.json
+```
+
+The response should include `items` and `totals.estimated_price`. The hosted free instance may take a little time to wake up. Only use demo values for portfolio evaluation.
+
+## Browser handoff to BuildEstimate (integration update)
+
+After reviewing the proposed scope, select the approved work items, check the approval box, and click **Send to BuildEstimate**. ScopePilot validates the approved payload through `POST /api/handoff` and opens BuildEstimate with only the selected item codes, quantities, project name, and default costing assumptions. BuildEstimate validates and imports the fields, then calculates the estimate using its own price catalog. You can also export the JSON without opening a new tab.
+
+**Deployment dependency:** This feature requires the accompanying BuildEstimate `web/index.html` update. Until it is deployed, the button will open the older demo with its default values. The URL fragment is browser-side transfer data and is removed from the BuildEstimate address bar on page load; no customer notes or follow-up questions are included in the transfer. Avoid personal data in project names. Never treat the imported scope as an approved customer quote; unanswered questions and sample pricing still require review.
