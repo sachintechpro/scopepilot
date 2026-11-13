@@ -28,6 +28,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
     def do_GET(self):
         path=urlsplit(self.path).path
+        if path == '/qa-bench.html':
+            return self.send(200, (HOME.parent / 'qa-bench.html').read_text(encoding='utf-8'), 'text/html')
         if path == '/':
             return self.send(200, HOME.read_text(encoding='utf-8'),'text/html')
         if path == '/api/health':
