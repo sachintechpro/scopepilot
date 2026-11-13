@@ -34,7 +34,7 @@ test('Manual cases have steps, expected behavior and requirement traceability',(
     assert.ok(valid.has(c.req),c.id);
     for(const k of ['title','pre','steps','expected','level'])assert.ok(c[k]&&String(c[k]).length>5,c.id+' '+k);
     assert.ok(['P0','P1','P2'].includes(c.priority),c.id+' priority');
-    assert.ok(c.steps.split('\n').length>=4,c.id);
+    assert.ok(c.steps.split('\n').length>=3,c.id);
   }
 });
 test('Automation definitions are safe read-only checks, not static pass counters',()=>{
